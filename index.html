@@ -589,11 +589,12 @@
         submitBtn.textContent = 'Posting...';
 
         try {
-            // POST to comments API
+            // POST to comments API (use no-cors + text/plain to avoid CORS preflight with Google Apps Script)
             const response = await fetch(COMMENTS_API_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'text/plain;charset=utf-8',
                 },
                 body: JSON.stringify({
                     paperTitle: title,
@@ -602,10 +603,8 @@
                     timestamp: new Date().toISOString()
                 })
             });
-
-            if (!response.ok && response.status !== 200) {
-                throw new Error(`Server error: ${response.status}`);
-            }
+            // no-cors returns opaque response (status 0), so we can't check response.ok
+            // The data is still sent and written to the sheet
 
             // Optimistic UI: add comment to local array
             const newComment = {
