@@ -191,6 +191,144 @@
             margin-bottom: 0.2rem;
         }
 
+        /* Comments Section Styles */
+        .comments-section {
+            margin-top: 1rem;
+            border-top: 1px solid #e8f0fe;
+            padding-top: 1rem;
+        }
+
+        .comments-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.85rem;
+            color: #667085;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .comments-toggle:hover {
+            color: #0f3460;
+        }
+
+        .comments-list {
+            margin: 1rem 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .comments-list.open {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+            padding: 0.8rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .comment-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #1a1a2e;
+        }
+
+        .comment-date {
+            font-size: 0.75rem;
+            color: #98a2b3;
+        }
+
+        .comment-text {
+            font-size: 0.85rem;
+            color: #475467;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .comments-form {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .comments-form select,
+        .comments-form input {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid #d0d5dd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            color: #1a1a2e;
+        }
+
+        .comments-form select {
+            flex-shrink: 0;
+            min-width: 140px;
+        }
+
+        .comments-form input[type="text"] {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .comments-form button {
+            padding: 0.5rem 1rem;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .comments-form button:hover {
+            background: #1a1a2e;
+        }
+
+        .comments-form button:disabled {
+            background: #d0d5dd;
+            cursor: not-allowed;
+        }
+
         .empty-state {
             text-align: center;
             padding: 4rem 1rem;
@@ -235,10 +373,30 @@
         .paper-card[data-member="Selcuk Guven"] { border-left-color: #c0392b; }
         .paper-card[data-member="Xinya Zhang"] { border-left-color: #2c3e50; }
 
+        /* Avatar colors for comments */
+        .comment-avatar-0 { background-color: #e74c3c; }
+        .comment-avatar-1 { background-color: #f39c12; }
+        .comment-avatar-2 { background-color: #27ae60; }
+        .comment-avatar-3 { background-color: #8e44ad; }
+        .comment-avatar-4 { background-color: #2980b9; }
+        .comment-avatar-5 { background-color: #1abc9c; }
+        .comment-avatar-6 { background-color: #d35400; }
+        .comment-avatar-7 { background-color: #c0392b; }
+        .comment-avatar-8 { background-color: #2c3e50; }
+
         @media (max-width: 600px) {
             header h1 { font-size: 1.6rem; }
             .paper-card { padding: 1.2rem; }
             .member-btn { font-size: 0.78rem; padding: 0.35rem 0.8rem; }
+            .comments-form {
+                flex-direction: column;
+            }
+            .comments-form select,
+            .comments-form input,
+            .comments-form button {
+                width: 100%;
+                min-width: unset;
+            }
         }
     </style>
 </head>
@@ -284,6 +442,8 @@
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1rKCdIGJY1TIxxyp1rtENcQ8_9X4Cdy4nA9ytNeHr7Dw/gviz/tq?tqx=out:csv&sheet=Form%20Responses%201';
     // Google Form URL for submissions
     const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSettwuOWiGAP9YQgLcgMGdE1tLSzb-CRQ83KZFOoZpdKCewkA/viewform';
+    // Comments API URL (Google Apps Script endpoint for fetching and posting comments)
+    const COMMENTS_API_URL = 'https://script.google.com/macros/s/AKfycbz-Dhxb15cxk6W111ZB8iNnQl0mVR-ZEjShyd5DHTvmS_9VG74TXXguqY6etdvQcB8O/exec';
     // =========================
 
     document.getElementById('submit-link').href = FORM_URL;
@@ -296,6 +456,7 @@
 
     let allPapers = [];
     let currentFilter = 'all';
+    let allComments = [];
 
     function* csvGenerator(text) {
         let current = '';
@@ -357,10 +518,148 @@
         } catch { return timestamp; }
     }
 
+    function formatRelativeTime(dateString) {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date)) return dateString;
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `${days}d ago`;
+            const weeks = Math.floor(days / 7);
+            if (weeks < 4) return `${weeks}w ago`;
+            return formatDate(dateString);
+        } catch { return dateString; }
+    }
+
     function escapeHtml(str) {
         const div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
+    }
+
+    function getAvatarColor(name) {
+        const index = MEMBERS.indexOf(name);
+        return index >= 0 ? index : 0;
+    }
+
+    function getFirstLetter(name) {
+        return name ? name.charAt(0).toUpperCase() : '?';
+    }
+
+    function getCommentsForPaper(title) {
+        return allComments.filter(c => c.paperTitle === title) || [];
+    }
+
+    function toggleComments(event, title) {
+        event.preventDefault();
+        const button = event.currentTarget;
+        const commentsList = button.parentElement.querySelector('.comments-list');
+        commentsList.classList.toggle('open');
+
+        // Update button text
+        const paperComments = getCommentsForPaper(title);
+        const count = paperComments.length;
+        button.innerHTML = `💬 Comments (${count})`;
+        if (commentsList.classList.contains('open')) {
+            button.innerHTML += ' ▼';
+        }
+    }
+
+    async function submitComment(event, title) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        const memberName = formData.get('member');
+        const commentText = formData.get('comment');
+
+        if (!memberName || !commentText.trim()) {
+            alert('Please select a member and enter a comment');
+            return;
+        }
+
+        const submitBtn = form.querySelector('button');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Posting...';
+
+        try {
+            // POST to comments API
+            const response = await fetch(COMMENTS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    paperTitle: title,
+                    commenter: memberName,
+                    comment: commentText,
+                    timestamp: new Date().toISOString()
+                })
+            });
+
+            if (!response.ok && response.status !== 200) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
+            // Optimistic UI: add comment to local array
+            const newComment = {
+                paperTitle: title,
+                commenter: memberName,
+                comment: commentText,
+                timestamp: new Date().toISOString()
+            };
+            allComments.push(newComment);
+
+            // Clear form and re-render comments
+            form.reset();
+            renderCommentsList(title, form.closest('.comments-section'));
+
+        } catch (err) {
+            alert(`Failed to post comment: ${err.message}`);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send';
+        }
+    }
+
+    function renderCommentsList(title, commentsSection) {
+        const commentsList = commentsSection.querySelector('.comments-list');
+        const paperComments = getCommentsForPaper(title);
+        const toggleBtn = commentsSection.querySelector('.comments-toggle');
+
+        // Update toggle button count
+        toggleBtn.innerHTML = `💬 Comments (${paperComments.length})`;
+        if (commentsList.classList.contains('open')) {
+            toggleBtn.innerHTML += ' ▼';
+        }
+
+        // Render comments
+        if (paperComments.length === 0) {
+            commentsList.innerHTML = '<p style="color: #98a2b3; font-size: 0.85rem; padding: 0.5rem;">No comments yet. Be the first to comment!</p>';
+        } else {
+            commentsList.innerHTML = paperComments.map(comment => {
+                const avatarColor = getAvatarColor(comment.commenter);
+                const firstLetter = getFirstLetter(comment.commenter);
+                return `
+                    <div class="comment-item">
+                        <div class="comment-avatar comment-avatar-${avatarColor}">${firstLetter}</div>
+                        <div class="comment-content">
+                            <div class="comment-header">
+                                <span class="comment-name">${escapeHtml(comment.commenter)}</span>
+                                <span class="comment-date">${formatRelativeTime(comment.timestamp)}</span>
+                            </div>
+                            <div class="comment-text">${escapeHtml(comment.comment)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
     }
 
     function renderPapers() {
@@ -407,6 +706,47 @@
             if (p.interesting) {
                 html += `<div class="interesting"><div class="section-label">Tell Me Something Interesting</div>${escapeHtml(p.interesting)}</div>`;
             }
+
+            // Comments section
+            const paperComments = getCommentsForPaper(p.title);
+            html += `<div class="comments-section">`;
+            html += `<button class="comments-toggle" onclick="toggleComments(event, '${escapeHtml(p.title).replace(/'/g, "\\'")}')">💬 Comments (${paperComments.length})</button>`;
+            html += `<div class="comments-list">`;
+
+            if (paperComments.length === 0) {
+                html += `<p style="color: #98a2b3; font-size: 0.85rem; padding: 0.5rem;">No comments yet. Be the first to comment!</p>`;
+            } else {
+                html += paperComments.map(comment => {
+                    const avatarColor = getAvatarColor(comment.commenter);
+                    const firstLetter = getFirstLetter(comment.commenter);
+                    return `
+                        <div class="comment-item">
+                            <div class="comment-avatar comment-avatar-${avatarColor}">${firstLetter}</div>
+                            <div class="comment-content">
+                                <div class="comment-header">
+                                    <span class="comment-name">${escapeHtml(comment.commenter)}</span>
+                                    <span class="comment-date">${formatRelativeTime(comment.timestamp)}</span>
+                                </div>
+                                <div class="comment-text">${escapeHtml(comment.comment)}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            html += `</div>`;
+            html += `<form class="comments-form" onsubmit="submitComment(event, '${escapeHtml(p.title).replace(/'/g, "\\'")}')">`;
+            html += `<select name="member" required>`;
+            html += `<option value="">Select member...</option>`;
+            MEMBERS.forEach(member => {
+                html += `<option value="${escapeHtml(member)}">${escapeHtml(member)}</option>`;
+            });
+            html += `</select>`;
+            html += `<input type="text" name="comment" placeholder="Add a comment..." required>`;
+            html += `<button type="submit">Send</button>`;
+            html += `</form>`;
+            html += `</div>`;
+
             html += `</div>`;
             return html;
         }).join('');
@@ -421,6 +761,37 @@
             );
         });
         renderPapers();
+    }
+
+    async function loadComments() {
+        try {
+            if (COMMENTS_API_URL === 'YOUR_COMMENTS_API_URL_HERE') {
+                // Demo mode with sample comments
+                allComments = [
+                    {
+                        paperTitle: 'Attention Is All You Need',
+                        commenter: 'Qiwei Pan',
+                        comment: 'Great foundational paper. The attention mechanism is elegant.',
+                        timestamp: new Date(Date.now() - 3600000).toISOString()
+                    },
+                    {
+                        paperTitle: 'Attention Is All You Need',
+                        commenter: 'Han Yao',
+                        comment: 'This completely changed how we approach NLP. Essential read.',
+                        timestamp: new Date(Date.now() - 1800000).toISOString()
+                    }
+                ];
+                return;
+            }
+            // Fetch comments from API
+            const resp = await fetch(COMMENTS_API_URL);
+            if (!resp.ok) throw new Error('Failed to fetch comments');
+            const data = await resp.json();
+            allComments = data || [];
+        } catch (err) {
+            console.warn('Could not load comments:', err.message);
+            allComments = [];
+        }
     }
 
     async function loadPapers() {
@@ -464,7 +835,8 @@
         }
     }
 
-    loadPapers();
+    // Load comments first, then papers
+    loadComments().then(() => loadPapers());
     </script>
 </body>
 </html>
