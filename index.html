@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COALab Arxiv</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 2.5rem 2rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 0.4rem;
+        }
+
+        header p {
+            font-size: 1rem;
+            opacity: 0.75;
+            font-weight: 300;
+        }
+
+        .controls {
+            max-width: 1100px;
+            margin: 1.8rem auto 0;
+            padding: 0 1.5rem;
+        }
+
+        .member-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 1.2rem;
+        }
+
+        .member-btn {
+            padding: 0.45rem 1rem;
+            border: 2px solid #d0d5dd;
+            border-radius: 999px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #344054;
+            transition: all 0.2s;
+        }
+
+        .member-btn:hover {
+            border-color: #0f3460;
+            color: #0f3460;
+        }
+
+        .member-btn.active {
+            background: #0f3460;
+            color: white;
+            border-color: #0f3460;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .paper-count {
+            font-size: 0.95rem;
+            color: #667085;
+        }
+
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.4rem;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .submit-btn:hover { background: #1a1a2e; }
+
+        .submit-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .papers {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 1.5rem 3rem;
+        }
+
+        .paper-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem 1.8rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: box-shadow 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .paper-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .paper-card .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .paper-card .submitter {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            background: #e8f0fe;
+            color: #0f3460;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .paper-card .date {
+            font-size: 0.8rem;
+            color: #98a2b3;
+        }
+
+        .paper-card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .paper-card h2 a {
+            color: #1a1a2e;
+            text-decoration: none;
+        }
+
+        .paper-card h2 a:hover {
+            color: #0f3460;
+            text-decoration: underline;
+        }
+
+        .paper-card .abstract,
+        .paper-card .interesting {
+            font-size: 0.9rem;
+            color: #475467;
+            line-height: 1.6;
+            margin-top: 0.6rem;
+        }
+
+        .paper-card .section-label {
+            font-weight: 600;
+            color: #344054;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.2rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #98a2b3;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            stroke: #d0d5dd;
+            fill: none;
+            stroke-width: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #98a2b3;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e8f0fe;
+            border-top: 3px solid #0f3460;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Color coding for each member */
+        .paper-card[data-member="Aya Hadil Kriba"] { border-left-color: #e74c3c; }
+        .paper-card[data-member="Farhan Jahan"] { border-left-color: #f39c12; }
+        .paper-card[data-member="Han Yao"] { border-left-color: #27ae60; }
+        .paper-card[data-member="Lorna McGregor-Smith"] { border-left-color: #8e44ad; }
+        .paper-card[data-member="Peter Pan"] { border-left-color: #2980b9; }
+        .paper-card[data-member="Qingyi Xu"] { border-left-color: #1abc9c; }
+        .paper-card[data-member="Redha Touati"] { border-left-color: #d35400; }
+        .paper-card[data-member="Selcuk Guven"] { border-left-color: #c0392b; }
+        .paper-card[data-member="Xinya Zhang"] { border-left-color: #2c3e50; }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 1.6rem; }
+            .paper-card { padding: 1.2rem; }
+            .member-btn { font-size: 0.78rem; padding: 0.35rem 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>COALab Arxiv</h1>
+        <p>Curated paper recommendations from the lab</p>
+    </header>
+
+    <div class="controls">
+        <div class="member-filters">
+            <button class="member-btn active" onclick="filterBy('all')">All</button>
+            <button class="member-btn" onclick="filterBy('Aya Hadil Kriba')">Aya Hadil Kriba</button>
+            <button class="member-btn" onclick="filterBy('Farhan Jahan')">Farhan Jahan</button>
+            <button class="member-btn" onclick="filterBy('Han Yao')">Han Yao</button>
+            <button class="member-btn" onclick="filterBy('Lorna McGregor-Smith')">Lorna McGregor-Smith</button>
+            <button class="member-btn" onclick="filterBy('Peter Pan')">Peter Pan</button>
+            <button class="member-btn" onclick="filterBy('Qingyi Xu')">Qingyi Xu</button>
+            <button class="member-btn" onclick="filterBy('Redha Touati')">Redha Touati</button>
+            <button class="member-btn" onclick="filterBy('Selcuk Guven')">Selcuk Guven</button>
+            <button class="member-btn" onclick="filterBy('Xinya Zhang')">Xinya Zhang</button>
+        </div>
+
+        <div class="top-bar">
+            <span class="paper-count" id="paper-count"></span>
+            <a class="submit-btn" id="submit-link" href="#" target="_blank">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Submit New Paper
+            </a>
+        </div>
+    </div>
+
+    <div class="papers" id="papers">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading papers...</p>
+        </div>
+    </div>
+
+    <script>
+    // ===== CONFIGURATION =====
+    // Replace this URL with your published Google Sheet CSV URL
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1rKCdIGJY1TIxxyp1rtENcQ8_9X4Cdy4nA9ytNeHr7Dw/gviz/tq?tqx=out:csv&sheet=Form%20Responses%201';
+    // Google Form URL for submissions
+    const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSettwuOWiGAP9YQgLcgMGdE1tLSzb-CRQ83KZFOoZpdKCewkA/viewform';
+    // ==========================
+
+    document.getElementById('submit-link').href = FORM_URL;
+
+    const MEMBERS = [
+        'Aya Hadil Kriba', 'Farhan Jahan', 'Han Yao',
+        'Lorna McGregor-Smith', 'Peter Pan', 'Qingyi Xu',
+        'Redha Touati', 'Selcuk Guven', 'Xinya Zhang'
+    ];
+
+    let allPapers = [];
+    let currentFilter = 'all';
+
+    function parseCSV(text) {
+        const lines = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '"') {
+                if (inQuotes && text[i + 1] === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === ',' && !inQuotes) {
+                lines.push(current);
+                current = '';
+            } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+                if (current || lines.length > 0) {
+                    lines.push(current);
+                    current = '';
+                }
+                if (lines.length > 0) {
+                    yield lines.splice(0);
+                }
+                if (ch === '\r' && text[i + 1] === '\n') i++;
+            } else {
+                current += ch;
+            }
+        }
+        if (current || lines.length > 0) {
+            lines.push(current);
+            yield lines.splice(0);
+        }
+    }
+
+    function* csvGenerator(text) {
+        let current = '';
+        let fields = [];
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const ch = text[i];
+            if (ch === '"') {
+                if (inQuotes && text[i + 1] === '"') {
+                    current += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === ',' && !inQuotes) {
+                fields.push(current.trim());
+                current = '';
+            } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+                fields.push(current.trim());
+                current = '';
+                if (fields.some(f => f)) yield fields;
+                fields = [];
+                if (ch === '\r' && text[i + 1] === '\n') i++;
+            } else {
+                current += ch;
+            }
+        }
+        fields.push(current.trim());
+        if (fields.some(f => f)) yield fields;
+    }
+
+    function parseSheetData(text) {
+        const rows = [...csvGenerator(text)];
+        if (rows.length < 2) return [];
+        // Header: Timestamp, Submitter, Paper Title, Paper Link, Abstract, Tell me something interesting
+        const headers = rows[0];
+        const papers = [];
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row[1] || !row[2]) continue; // skip if no submitter or title
+            papers.push({
+                timestamp: row[0] || '',
+                submitter: row[1] || '',
+                title: row[2] || '',
+                link: row[3] || '',
+                abstract: row[4] || '',
+                interesting: row[5] || ''
+            });
+        }
+        return papers;
+    }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return '';
+        try {
+            const d = new Date(timestamp);
+            if (isNaN(d)) return timestamp;
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        } catch { return timestamp; }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function renderPapers() {
+        const container = document.getElementById('papers');
+        const filtered = currentFilter === 'all'
+            ? allPapers
+            : allPapers.filter(p => p.submitter === currentFilter);
+
+        document.getElementById('paper-count').textContent =
+            `${filtered.length} paper${filtered.length !== 1 ? 's' : ''}` +
+            (currentFilter !== 'all' ? ` by ${currentFilter}` : '');
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H5a6 2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <p>No papers yet${currentFilter !== 'all' ? ' from ' + currentFilter : ''}.</p>
+                    <p style="margin-top:0.5rem">Click <strong>Submit New Paper</strong> to add one!</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(p => {
+            let html = `<div class="paper-card" data-member="${escapeHtml(p.submitter)}">`;
+            html += `<div class="meta">`;
+            html += `<span class="submitter">${escapeHtml(p.submitter)}</span>`;
+            html += `<span class="date">${formatDate(p.timestamp)}</span>`;
+            html += `</div>`;
+            html += `<h2>`;
+            if (p.link) {
+                html += `<a href="${escapeHtml(p.link)}" target="_blank" rel="noopener">${escapeHtml(p.title)}</a>`;
+            } else {
+                html += escapeHtml(p.title);
+            }
+            html += `</h2>`;
+            if (p.abstract) {
+                html += `<div class="abstract"><div class="section-label">Abstract</div>${escapeHtml(p.abstract)}</div>`;
+            }
+            if (p.interesting) {
+                html += `<div class="interesting"><div class="section-label">Tell Me Something Interesting</div>${escapeHtml(p.interesting)}</div>`;
+            }
+            html += `</div>`;
+            return html;
+        }).join('');
+    }
+
+    function filterBy(name) {
+        currentFilter = name;
+        document.querySelectorAll('.member-btn').forEach(btn => {
+            btn.classList.toggle('active',
+                (name === 'all' && btn.textContent === 'All') ||
+                btn.textContent === name
+            );
+        });
+        renderPapers();
+    }
+
+    async function loadPapers() {
+        try {
+            if (SHEET_CSV_URL === 'GOOGLE_SHEET_CSV_URL_HERE') {
+                // Demo mode with sample data
+                allPapers = [
+                    {
+                        timestamp: '2026-04-15T10:00:00',
+                        submitter: 'Peter Pan',
+                        title: 'Attention Is All You Need',
+                        link: 'https://arxiv.org/abs/1706.03762',
+                        abstract: 'The dominant sequence transduction models are based on complex recurrent or convolutional neural networks that include an encoder and a decoder.',
+                        interesting: 'This paper introduced the Transformer architecture that powers most modern LLMs including GPT and Claude.'
+                    },
+                    {
+                        timestamp: '2026-04-14T14:30:00',
+                        submitter: 'Han Yao',
+                        title: 'BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding',
+                        link: 'https://arxiv.org/abs/1810.04805',
+                        abstract: '',
+                        interesting: 'BERT showed that bidirectional pre-training dramatically improves NLP tasks.'
+                    }
+                ];
+                allPapers.reverse();
+                renderPapers();
+                return;
+            }
+            const resp = await fetch(SHEET_CSV_URL);
+            if (!resp.ok) throw new Error('Failed to fetch');
+            const text = await resp.text();
+            allPapers = parseSheetData(text);
+            allPapers.reverse(); // newest first
+            renderPapers();
+        } catch (err) {
+            document.getElementById('papers').innerHTML = `
+                <div class="empty-state">
+                    <p>Failed to load papers. Please check the Google Sheet URL configuration.</p>
+                    <p style="margin-top:0.5rem;font-size:0.85rem;color:#98a2b3;">${escapeHtml(err.message)}</p>
+                </div>`;
+        }
+    }
+
+    loadPapers();
+    </script>
+</body>
+</html>
